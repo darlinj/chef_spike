@@ -1,1 +1,3 @@
 fog_env.rb
+*.pem
+*.key
