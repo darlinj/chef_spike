@@ -1,0 +1,22 @@
+#!/usr/bin/env ruby
+require "rubygems"
+require "right_aws"
+s3 = RightAws::S3.new('1K4tcO8RH9lBMntV8CSe',
+                      'iJXfKSwH4araSmolahSsGonDM_pgdArul5Fj5w..',
+                      :endpoint_url => 'http://storage.fr005.baynard.cloud21cn.com:8080',
+                      :no_subdomains => true)
+
+#col = s3.buckets "colosseum-backup", true
+#col.put("postgres_backup1107121145.nc",`cat ~/tmp/postgres_backup1107121145.nc`)
+
+bucket = s3.bucket "colosseum-backup"
+
+latest_backup_name = bucket.keys(:prefix => "postgres_backup").sort{|x,y| x.last_modified <=> y.last_modified}.map{|n| n.name}.last
+
+ret = bucket.get(latest_backup_name)
+
+File.open("/tmp/postgres_backup1107121145.nc", "wb") do |file|
+  file.write ret
+end
+
+`mcrypt -d /tmp/postgres_backup1107121145.nc --key blah`

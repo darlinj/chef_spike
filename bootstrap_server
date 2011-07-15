@@ -1,0 +1,29 @@
+#!/usr/bin/env ruby
+#
+require "cloud"
+require "chef_server"
+
+keypair_name = ""
+unless ARGV[0]
+  puts "Please provide a keypair name"
+  keypair_name = gets 
+end
+
+puts "Your key to access this server is stored in /tmp/#{keypair_name}"
+
+cloud = Cloud.new
+puts "creating keys to access servers"
+cloud.create_keypair keypair_name
+
+puts "creating security group to access servers"
+cloud.create_security_group "default"
+
+puts "Spinning up servers"
+servers = cloud.create_servers(1)
+
+server1 = servers[0]
+
+chef = ChefServer.new
+chef.configure_chef
+
+chef.bootstrap(server1.dns_name, server1.id, [], "/tmp/#{keypair_name}")

@@ -1,0 +1,25 @@
+#!/usr/bin/env ruby
+#
+require "cloud"
+require "chef_server"
+
+cloud = Cloud.new
+puts "creating keys to access servers"
+cloud.create_keypair "chef_keyfile"
+
+puts "creating security group to access servers"
+cloud.create_security_group "chef-group"
+
+puts "Spinning up servers"
+servers = cloud.create_servers(1, "pmi-09a4d943")
+
+chefserver = servers.first
+
+#more stuff here#more stuff here
+
+Net::SSH.start(chefserver.dns_name, params[:server_username]) do | ssh |
+  ssh.exec!("sed -i -e \"s|#unix_socket_directory = ''|unix_socket_directory = '/tmp'|g\" #{db_directory}/postgresql.conf")
+end
+
+puts "Your new cluster is available at #{chefserver.dns_name} - enjoy"
+

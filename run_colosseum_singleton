@@ -1,0 +1,26 @@
+#!/usr/bin/env ruby
+#
+require "cloud"
+require "chef_server"
+
+cloud = Cloud.new
+puts "creating keys to access servers"
+cloud.create_keypair "colosseum2"
+
+puts "creating security group to access servers"
+cloud.create_security_group "colosseum2"
+
+puts "Spinning up servers"
+servers = cloud.create_servers(1)
+
+colosseum = servers[0]
+
+chef = ChefServer.new
+chef.configure_chef
+
+puts "Bootstrapping #{colosseum.id}"
+
+chef.bootstrap(colosseum.dns_name, colosseum.id, ["role[cdd_primary_db_server], role[cdd_app_server]"], "/tmp/colosseum2")
+
+puts "Your new server is available at #{colosseum.dns_name} - enjoy"
+

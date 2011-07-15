@@ -1,0 +1,88 @@
+bash -c '
+echo "sorting out MTU"
+ifconfig eth0 mtu 1400
+
+(
+cat <<'EOP'
+MTU=1400
+EOP
+) >> /etc/sysconfig/network-scripts/ifcfg-eth0
+
+/etc/init.d/network restart
+
+export PATH=/usr/kerberos/sbin:/usr/kerberos/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:$PATH
+
+rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
+rpm -Uvh http://download.elff.bravenet.com/5/i386/elff-release-5-3.noarch.rpm
+
+echo "starting package install"
+
+yum install -q -y make gcc gcc-c++ zlib-devel openssl-devel readline-devel sqlite-devel
+
+echo "finished package install"
+
+cd /tmp
+wget http://ftp.ruby-lang.org/pub/ruby/1.8/ruby-1.8.7.tar.gz
+tar zxf ruby-1.8.7.tar.gz
+cd /tmp/ruby-1.8.7
+./configure --with-openssl-dir=/usr/lib/openssl
+make
+make install
+ln -sf /usr/local/bin/ruby /usr/bin/ruby
+
+cd /tmp
+wget http://production.cf.rubygems.org/rubygems/rubygems-1.7.2.tgz
+tar zxf rubygems-1.7.2.tgz
+cd rubygems-1.7.2
+ruby setup.rb --no-format-executable
+
+gem update --system
+gem update
+gem install ohai chef --no-rdoc --no-ri --verbose <%= '--prerelease' if @config[:prerelease] %>
+
+mkdir -p /etc/chef
+mkdir -p /etc/chef/ohai-plugins
+
+(
+cat <<'EOP'
+<%= IO.read(Chef::Config[:validation_key]) %>
+EOP
+) > /tmp/validation.pem
+awk NF /tmp/validation.pem > /etc/chef/validation.pem
+rm /tmp/validation.pem
+
+(
+cat <<'EOP'
+<%= IO.read(Chef::Config[:databag_encryption_key]) %>
+EOP
+) > /etc/chef/encrypted_data_bag_secret
+
+(
+cat <<'EOP'
+log_level        :info
+log_location     STDOUT
+chef_server_url  "<%= Chef::Config[:chef_server_url] %>"
+validation_client_name "<%= Chef::Config[:validation_client_name] %>"
+<% if @config[:chef_node_name] == nil %>
+# Using default node name
+<% else %>
+node_name "<%= @config[:chef_node_name] %>"
+<% end %> 
+Ohai::Config[:plugin_path] << "/etc/chef/ohai-plugins"
+EOP
+) > /etc/chef/client.rb
+
+(
+cat <<'EOP'
+provides "public_ip"
+public_ip "<%= @config[:public_ip] %>"
+EOP
+) > /etc/chef/ohai-plugins/public_ip.rb
+
+(
+cat <<'EOP'
+<%= { "run_list" => @run_list }.to_json %>
+EOP
+) > /etc/chef/first-boot.json
+
+chef-client -j /etc/chef/first-boot.json'

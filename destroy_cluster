@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+#
+require 'chef/config'
+require 'net/ssh'
+require 'chef/knife'
+require 'chef/knife/bootstrap'
+require 'chef/knife/ssh'
+require "cloud"
+require "chef_server"
+
+cloud = Cloud.new
+puts "Destroying cluster"
+servers = cloud.destroy_cluster "chef-group"
+chef = ChefServer.new
+chef.configure_chef
+servers.each do |server|
+  chef.delete_node(server.id)
+end

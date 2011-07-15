@@ -1,0 +1,27 @@
+{
+  "name": "cdd",
+  "default_attributes": {
+    "app_environment": "production"
+  },
+  "json_class": "Chef::Role",
+  "run_list": [
+    "recipe[sendmail::default]",
+    "recipe[postgresql::server]",
+    "recipe[postgres_backup::default]",
+    "recipe[passenger_apache2::mod_rails]",
+    "recipe[git::default]",
+    "recipe[hardening::centos]",
+    "recipe[hardening::apache2]",
+    "recipe[rails_app_server::default]",
+    "recipe[colosseum::default]",
+    "recipe[monit::default]"
+  ],
+  "description": "CDD Role",
+  "chef_type": "role",
+  "override_attributes": {
+    "db_backup_email_address": "cloud.development.team@bt.com",
+    "application_name": "colosseum",
+    "dns_hostname": "content-showcase.cloud21cn.com",
+    "application_directory": "/home/colosseum/colosseum_app"
+  }
+}

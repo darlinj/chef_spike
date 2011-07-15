@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+require "chef_server"
+chef = ChefServer.new
+chef.configure_chef
+chef.bootstrap_chef(ARGV[0], ARGV[1],["role[cdd]"], "/tmp/chef_keyfile")
+
+
+
+
+
+
