@@ -37,7 +37,7 @@ class Cloud
     servers = []
     threads = []
     number_of_servers.times do
-      server = @compute.servers.create(:image_id => image_id, :groups => [@group_name], :key_name => @keypair_name, :flavor_id=>"c1.xlarge")
+      server = @compute.servers.create(:image_id => image_id, :groups => [@group_name], :key_name => @keypair_name) #, :flavor_id=>"c1.xlarge")
       servers << server
       threads << Thread.new(server) do |s|
         puts "\nstarting server: #{s.id}"

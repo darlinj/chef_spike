@@ -11,12 +11,13 @@ puts "creating security group to access servers"
 cloud.create_security_group "chef-group"
 
 puts "Spinning up servers"
-servers = cloud.create_servers(4)
+servers = cloud.create_servers(5)
 
 webserver1 = servers[0]
 webserver2 = servers[1]
-loadbalancer = servers[2]
-database = servers[3]
+loadbalancer1 = servers[2]
+loadbalancer2 = servers[3]
+database = servers[4]
 
 chef = ChefServer.new
 chef.configure_chef
@@ -24,7 +25,7 @@ chef.configure_chef
 chef.bootstrap(database.dns_name, database.id, ["role[cdd_primary_db_server]"], "/tmp/chef_keyfile")
 chef.bootstrap(webserver1.dns_name, webserver1.id, ["role[cdd_app_server]"], "/tmp/chef_keyfile")
 chef.bootstrap(webserver2.dns_name, webserver2.id, ["role[cdd_app_server]"], "/tmp/chef_keyfile")
-chef.bootstrap(loadbalancer.dns_name, loadbalancer.id, ["role[cdd_loadbalancer]"], "/tmp/chef_keyfile")
+chef.bootstrap(loadbalancer1.dns_name, loadbalancer1.id, ["role[cdd_loadbalancer]"], "/tmp/chef_keyfile")
 
-puts "Your new cluster is available at #{loadbalancer.dns_name} - enjoy"
+puts "Your new cluster is available at #{loadbalancer1.dns_name} - enjoy"
 

@@ -8,16 +8,19 @@ MTU=1400
 EOP
 ) >> /etc/sysconfig/network-scripts/ifcfg-eth0
 
+/etc/init.d/network restart
+
+export PATH=/usr/kerberos/sbin:/usr/kerberos/bin:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin:$PATH
+
 rpm -Uvh http://download.fedora.redhat.com/pub/epel/5/i386/epel-release-5-4.noarch.rpm
-sudo wget -O /etc/yum.repos.d/aegis.repo http://rpm.aegisco.com/aegisco/el5/aegisco.repo
 rpm -Uvh http://download.elff.bravenet.com/5/i386/elff-release-5-3.noarch.rpm
 
-yum install -q -y make gcc gcc-c++ zlib-devel openssl-devel readline-devel sqlite-devel git automake autoconf make gcc44 gcc44-c++
+echo "starting package install"
 
-ln -sf /usr/bin/gcc44 /usr/bin/gcc
-ln -sf /usr/bin/g++44 /usr/bin/g++
+yum install -y ruby-1.8.7.334-2.el5 ruby-devel-1.8.7.334-2.el5 ruby-ri-1.8.7.334-2.el5 ruby-rdoc-1.8.7.334-2.el5 git gcc gcc-c++ automake autoconf make zlib-devel
 
-#Install ruby
+echo "finished package install"
+
 cd /tmp
 wget http://ftp.ruby-lang.org/pub/ruby/1.8/ruby-1.8.7.tar.gz
 tar zxf ruby-1.8.7.tar.gz
@@ -27,16 +30,26 @@ make
 make install
 ln -sf /usr/local/bin/ruby /usr/bin/ruby
 
-#Install rubygems
 cd /tmp
 wget http://production.cf.rubygems.org/rubygems/rubygems-1.7.2.tgz
 tar zxf rubygems-1.7.2.tgz
 cd rubygems-1.7.2
-sudo ruby setup.rb --no-format-executable
+ruby setup.rb --no-format-executable
 
-sudo gem install chef ohai --no-rdoc --no-ri
+gem update --system
 
-mkdir /etc/chef
+gem install ohai chef --no-rdoc --no-ri --verbose 
+
+yum install -y gcc44 gcc44-c++
+
+ln -sf /usr/bin/gcc44 /usr/bin/gcc
+ln -sf /usr/bin/g++44 /usr/bin/g++
+ln -sf /usr/local/bin/chef-solr /usr/bin/chef-solr
+ln -sf /usr/local/bin/chef-server /usr/bin/chef-server
+ln -sf /usr/local/bin/chef-server-webui /usr/bin/chef-server-webui
+ln -sf /usr/local/bin/chef-expander /usr/bin/chef-expander
+
+mkdir -p /etc/chef
 
 (
 cat <<'EOP'
@@ -56,6 +69,6 @@ cat <<'EOP'
   "run_list": [ "recipe[chef-server::rubygems-install]" ]
 }
 EOP
-) > ~/.chef.json
+) > ~/chef.json
 
 chef-solo -c /etc/chef/solo.rb -j ~/chef.json -r http://s3.amazonaws.com/chef-solo/bootstrap-latest.tar.gz

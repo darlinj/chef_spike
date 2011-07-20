@@ -1,25 +1,38 @@
 #!/usr/bin/env ruby
 #
+Bundler.require
 require "cloud"
 require "chef_server"
+KEYNAME = "chef_server_keyfile"
+KEYFILE = "/tmp/#{KEYNAME}"
+IMAGE = "pmi-a14d20a6" #centos
+#IMAGE = "pmi-09a4d943" #ubuntu
+INSTALL_SCRIPT_NAME = "install_chef_server_centos"
 
 cloud = Cloud.new
 puts "creating keys to access servers"
-cloud.create_keypair "chef_keyfile"
+cloud.create_keypair KEYNAME
 
 puts "creating security group to access servers"
-cloud.create_security_group "chef-group"
+cloud.create_security_group "chef-server-group"
 
 puts "Spinning up servers"
-servers = cloud.create_servers(1, "pmi-09a4d943")
+servers = cloud.create_servers(1, IMAGE)
 
 chefserver = servers.first
 
-#more stuff here#more stuff here
+Net::SCP.upload!(chefserver.dns_name,
+                 "root",
+                 "./#{INSTALL_SCRIPT_NAME}",
+                 "/tmp/#{INSTALL_SCRIPT_NAME}",
+                 :ssh => {:auth_methods => %w(publickey),:keys => KEYFILE },
+                 :recursive => true, :paranoid => false )
 
-Net::SSH.start(chefserver.dns_name, params[:server_username]) do | ssh |
-  ssh.exec!("sed -i -e \"s|#unix_socket_directory = ''|unix_socket_directory = '/tmp'|g\" #{db_directory}/postgresql.conf")
+
+Net::SSH.start(chefserver.dns_name, "root", :auth_methods => %w(publickey),:keys => KEYFILE, :timeout => 600, :paranoid => false) do |ssh|
+  ssh.exec! "chmod a+x /tmp/#{INSTALL_SCRIPT_NAME}"
+  ssh.exec! "/tmp/#{INSTALL_SCRIPT_NAME} > /tmp/install.log"
 end
 
-puts "Your new cluster is available at #{chefserver.dns_name} - enjoy"
+puts "Your new chef server is available at #{chefserver.dns_name} - enjoy"
 
