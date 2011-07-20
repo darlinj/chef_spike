@@ -17,7 +17,7 @@ rpm -Uvh http://download.elff.bravenet.com/5/i386/elff-release-5-3.noarch.rpm
 
 echo "starting package install"
 
-yum install -y ruby-1.8.7.334-2.el5 ruby-devel-1.8.7.334-2.el5 ruby-ri-1.8.7.334-2.el5 ruby-rdoc-1.8.7.334-2.el5 git gcc gcc-c++ automake autoconf make zlib-devel
+yum install -q -y make gcc gcc-c++ zlib-devel openssl-devel readline-devel sqlite-devel
 
 echo "finished package install"
 
@@ -71,4 +71,6 @@ cat <<'EOP'
 EOP
 ) > ~/chef.json
 
+# NOTE:  This bit of the script fails the first time it is run.  It compains about some group not exisiting
+# I have found thatif you just run it again then it works!  Can't be bothered to figure this out now so just run this twice.
 chef-solo -c /etc/chef/solo.rb -j ~/chef.json -r http://s3.amazonaws.com/chef-solo/bootstrap-latest.tar.gz

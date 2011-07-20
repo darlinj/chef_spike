@@ -31,7 +31,7 @@ Net::SCP.upload!(chefserver.dns_name,
 
 Net::SSH.start(chefserver.dns_name, "root", :auth_methods => %w(publickey),:keys => KEYFILE, :timeout => 600, :paranoid => false) do |ssh|
   ssh.exec! "chmod a+x /tmp/#{INSTALL_SCRIPT_NAME}"
-  ssh.exec! "/tmp/#{INSTALL_SCRIPT_NAME} > /tmp/install.log"
+  ssh.exec! "/tmp/#{INSTALL_SCRIPT_NAME} > /tmp/install.log &2>1"
 end
 
 puts "Your new chef server is available at #{chefserver.dns_name} - enjoy"
