@@ -3,6 +3,18 @@
 require "cloud"
 require "chef_server"
 
+puts "Creating environment"
+environment_name = ""
+unless ARGV[0]
+  puts "Please provide a environment name"
+  environment_name = gets 
+end
+environment_name.chomp!
+
+chef = ChefServer.new
+chef.configure_chef
+chef.create_environment(environment_name)
+
 cloud = Cloud.new
 puts "creating keys to access servers"
 cloud.create_keypair "chef_keyfile"
@@ -11,21 +23,20 @@ puts "creating security group to access servers"
 cloud.create_security_group "chef-group"
 
 puts "Spinning up servers"
-servers = cloud.create_servers(5)
+small_servers = cloud.create_servers(3)
+big_servers = cloud.create_servers(2, :instance_type => "c1.xlarge")
 
-webserver1 = servers[0]
-webserver2 = servers[1]
-loadbalancer1 = servers[2]
-loadbalancer2 = servers[3]
-database = servers[4]
+webserver1 = big_servers[0]
+webserver2 = big_servers[1]
+loadbalancer1 = small_servers[0]
+loadbalancer2 = small_servers[1]
+database = small_servers[2]
 
-chef = ChefServer.new
-chef.configure_chef
-
-chef.bootstrap(database.dns_name, database.id, ["role[cdd_primary_db_server]"], "/tmp/chef_keyfile")
-chef.bootstrap(webserver1.dns_name, webserver1.id, ["role[cdd_app_server]"], "/tmp/chef_keyfile")
-chef.bootstrap(webserver2.dns_name, webserver2.id, ["role[cdd_app_server]"], "/tmp/chef_keyfile")
-chef.bootstrap(loadbalancer1.dns_name, loadbalancer1.id, ["role[cdd_loadbalancer]"], "/tmp/chef_keyfile")
+chef.bootstrap(database.dns_name, database.id, ["role[cdd_primary_db_server]"], "/tmp/chef_keyfile", environment_name)
+chef.bootstrap(webserver1.dns_name, webserver1.id, ["role[cdd_app_server]"], "/tmp/chef_keyfile", environment_name)
+chef.bootstrap(webserver2.dns_name, webserver2.id, ["role[cdd_app_server]"], "/tmp/chef_keyfile", environment_name)
+chef.bootstrap(loadbalancer1.dns_name, loadbalancer1.id, ["role[cdd_loadbalancer]"], "/tmp/chef_keyfile", environment_name)
+chef.bootstrap(loadbalancer2.dns_name, loadbalancer2.id, ["role[cdd_loadbalancer]"], "/tmp/chef_keyfile", environment_name)
 
 puts "Your new cluster is available at #{loadbalancer1.dns_name} - enjoy"
 

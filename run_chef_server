@@ -17,7 +17,7 @@ puts "creating security group to access servers"
 cloud.create_security_group "chef-server-group"
 
 puts "Spinning up servers"
-servers = cloud.create_servers(1, IMAGE)
+servers = cloud.create_servers(1, :image_id => IMAGE)
 
 chefserver = servers.first
 

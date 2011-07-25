@@ -33,11 +33,13 @@ class Cloud
     security_group.authorize_port_range(80..80)
   end
 
-  def create_servers( number_of_servers, image_id=FogEnv::IMAGE_ID )
+  def create_servers( number_of_servers, params = {} )
+    image_id = param[:image_id] ? params[:image_id] : FogEnv::IMAGE_ID
+    instance_type = param[:instance_type] ? params[:instance_type] : "x1.small"
     servers = []
     threads = []
     number_of_servers.times do
-      server = @compute.servers.create(:image_id => image_id, :groups => [@group_name], :key_name => @keypair_name) #, :flavor_id=>"c1.xlarge")
+      server = @compute.servers.create(:image_id => image_id, :groups => [@group_name], :key_name => @keypair_name, :flavor_id=> instance_type)
       servers << server
       threads << Thread.new(server) do |s|
         puts "\nstarting server: #{s.id}"
