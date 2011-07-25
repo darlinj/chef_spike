@@ -81,8 +81,9 @@ EOP
 
 (
 cat <<'EOP'
-<%= { "run_list" => @run_list }.to_json %>
+<%= { "run_list" => @run_list}.to_json %>
 EOP
 ) > /etc/chef/first-boot.json
 
-chef-client -j /etc/chef/first-boot.json'
+chef-client -j /etc/chef/first-boot.json <%= "--environment #{@config[:environment]}" if @config[:environment] %>
+'

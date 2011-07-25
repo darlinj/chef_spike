@@ -8,11 +8,11 @@ require 'chef/knife/ssh'
 class ChefServer < Chef::Knife
   def initialize
     Chef::Config.from_file(".chef/knife.rb")
-    @rest = Chef::REST.new("http://109.144.10.241:4000")
+    @rest = Chef::REST.new(Chef::Config[:chef_server_url])
     super
   end
 
-  def bootstrap ip_address, node_name, role, identity_file
+  def bootstrap(ip_address, node_name, role, identity_file, environment=nil)
     Chef::Knife::Bootstrap.load_deps
     #puts "knife bootstrap #{ip_address} -i #{TMP_KEYFILE} -N #{node_name} -d centos5-gems-mtu"
     #`knife bootstrap #{ip_address} -i #{TMP_KEYFILE} -N #{node_name} -d centos5-gems-mtu`
@@ -26,7 +26,7 @@ class ChefServer < Chef::Knife
       bootstrap.config[:prerelease]                   = false
       bootstrap.config[:distro]                       = "centos5-gems-mtu"
       bootstrap.config[:use_sudo]                     = true
-      bootstrap.config[:environment]                  = "test_colosseum"
+      bootstrap.config[:environment]                  = environment
       bootstrap.run
   end
 
@@ -36,8 +36,23 @@ class ChefServer < Chef::Knife
   end
 
   def delete_node node_id
-    if rest.get_rest("/nodes/#{node_id}")
+    if rest.get_rest("/nodes").keys.include?(node_id) 
       rest.delete_rest("/nodes/#{node_id}")
+    end
+  end
+
+  def create_environment environment_name
+    unless rest.get_rest("/environments").keys.include?(environment_name.chomp) 
+      body = { "name" => environment_name.chomp,
+        "json_class" => "Chef::Environment",
+        "chef_type" => "environment",
+        "attributes" => {},
+        "description"=> "",
+        "cookbook_versions" => {}
+      }
+      rest.post_rest("environments",body)
+    else
+      raise "Environment already exists.  Please choose a diferent name"
     end
   end
 end
