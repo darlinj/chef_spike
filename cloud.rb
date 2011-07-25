@@ -34,8 +34,8 @@ class Cloud
   end
 
   def create_servers( number_of_servers, params = {} )
-    image_id = param[:image_id] ? params[:image_id] : FogEnv::IMAGE_ID
-    instance_type = param[:instance_type] ? params[:instance_type] : "x1.small"
+    image_id = params[:image_id] ? params[:image_id] : FogEnv::IMAGE_ID
+    instance_type = params[:instance_type] ? params[:instance_type] : "m1.small"
     servers = []
     threads = []
     number_of_servers.times do

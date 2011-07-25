@@ -4,12 +4,12 @@ require "cloud"
 require "chef_server"
 
 puts "Creating environment"
-environment_name = ""
+environment_name = ARGV[0]
 unless ARGV[0]
   puts "Please provide a environment name"
   environment_name = gets 
+  environment_name.chomp!
 end
-environment_name.chomp!
 
 chef = ChefServer.new
 chef.configure_chef
@@ -17,10 +17,10 @@ chef.create_environment(environment_name)
 
 cloud = Cloud.new
 puts "creating keys to access servers"
-cloud.create_keypair "chef_keyfile"
+cloud.create_keypair environment_name
 
 puts "creating security group to access servers"
-cloud.create_security_group "chef-group"
+cloud.create_security_group environment_name
 
 puts "Spinning up servers"
 small_servers = cloud.create_servers(3)
