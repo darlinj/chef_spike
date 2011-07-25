@@ -8,9 +8,17 @@ require 'chef/knife/ssh'
 require "cloud"
 require "chef_server"
 
+puts "Creating environment"
+environment_name = ARGV[0]
+unless ARGV[0]
+  puts "Please provide a environment name"
+  environment_name = gets 
+  environment_name.chomp!
+end
+
 cloud = Cloud.new
 puts "Destroying cluster"
-servers = cloud.destroy_cluster "chef-group"
+servers = cloud.destroy_cluster environment_name
 chef = ChefServer.new
 chef.configure_chef
 servers.each do |server|
